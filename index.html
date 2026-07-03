@@ -94,6 +94,13 @@
   .subject-card .meta{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-dim);}
   .subject-card .meta b{color:var(--ink);}
 
+  .subject-card.all-card{
+    background:linear-gradient(120deg,var(--navy-700),var(--navy-800) 60%);
+    border-color:var(--orange-dim);
+  }
+  .subject-card.all-card .num{color:#ffd9b0;}
+  .subject-card.all-card:hover{box-shadow:0 12px 34px -14px rgba(242,153,74,.4);}
+
   .stats-strip{display:flex;gap:10px;margin:22px 0 6px;flex-wrap:wrap;}
   .stat-chip{flex:1;min-width:120px;background:var(--navy-800);border:1px solid var(--line);border-radius:12px;padding:12px 14px;}
   .stat-chip .val{font-family:'Fraunces',serif;font-size:22px;font-weight:700;color:var(--orange);}
@@ -224,6 +231,12 @@
       <div class="stat-chip"><div class="val" id="totalMastered">0</div><div class="lab">Stăpânite</div></div>
     </div>
     <p class="section-label">Materii disponibile</p>
+    <button class="subject-card all-card" id="btnAllSubjects" style="width:100%;margin-bottom:14px;">
+      <div class="num">TOATE TEMELE</div>
+      <h3 id="allCardTitle">Toate materiile amestecate</h3>
+      <div class="bar"><i id="allCardBar" style="width:0%"></i></div>
+      <div class="meta"><span>Stăpânite <b id="allCardMastered">0/90</b></span><span id="allCardSolved">0 rezolvate</span></div>
+    </button>
     <div class="subject-grid" id="subjectGrid"></div>
     <footer>Grile generate din tematica de admitere master 2026 · FEAA Craiova</footer>
   </section>
@@ -329,6 +342,10 @@ function allQuestions(){
   return list;
 }
 
+function allSection(){
+  return { id: 'ALL', title: 'Toate materiile amestecate', questions: allQuestions() };
+}
+
 function statFor(qid){
   return progress[qid] || { attempts:0, correctStreak:0, lastResult:null };
 }
@@ -370,6 +387,10 @@ function renderSelect(){
   document.getElementById('todayCount').textContent = Math.min(daily.count,20);
   document.getElementById('todayRing').style.setProperty('--pct', Math.min(100, Math.round(daily.count/20*100)));
 
+  document.getElementById('allCardBar').style.width = (g.total? Math.round(g.mastered/g.total*100):0) + '%';
+  document.getElementById('allCardMastered').textContent = g.mastered + '/' + g.total;
+  document.getElementById('allCardSolved').textContent = g.solved + ' rezolvate';
+
   const grid = document.getElementById('subjectGrid');
   grid.innerHTML = '';
   QUIZ_DATA.forEach((sec, i) => {
@@ -395,7 +416,7 @@ function shuffleArr(arr){
 }
 
 function buildOrder(){
-  const sec = QUIZ_DATA.find(s=>s.id===state.subjectId);
+  const sec = currentSec();
   let ids = sec.questions.map(q=>q.id);
   if (state.mode==='unknown') ids = ids.filter(isUnknown);
   else if (state.mode==='wrong') ids = ids.filter(isWrong);
@@ -404,7 +425,7 @@ function buildOrder(){
   state.idx = 0;
 }
 
-function currentSec(){ return QUIZ_DATA.find(s=>s.id===state.subjectId); }
+function currentSec(){ return state.subjectId==='ALL' ? allSection() : QUIZ_DATA.find(s=>s.id===state.subjectId); }
 function qById(qid){ return currentSec().questions.find(q=>q.id===qid); }
 
 function openSubject(id){
@@ -548,6 +569,7 @@ function renderMap(){
 }
 
 /* ---------- events ---------- */
+document.getElementById('btnAllSubjects').onclick = () => openSubject('ALL');
 document.getElementById('btnBack').onclick = () => showScreen('select');
 
 document.querySelectorAll('.mode-btn').forEach(btn=>{
